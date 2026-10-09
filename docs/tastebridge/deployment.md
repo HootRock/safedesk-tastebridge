@@ -1,60 +1,35 @@
-# Hosted deployment targets
+# TasteBridge deployment
 
-The current no-card, zero-additional-spending TasteBridge target is **Cloudflare Workers Free with Static Assets, native Workers AI / `@cf/meta/llama-3.3-70b-instruct-fp8-fast` and D1**. Follow the [current Cloudflare Worker deployment guide](../deploy-cloudflare-workers.md). The public application URL, remote schema migration and live hosted workflow remain unverified. The local Python application remains available for SafeDesk and TasteBridge.
+**Public application:** [TasteBridge](https://tastebridge-hackathon.wtr1274970944.workers.dev/tastebridge).
 
-## Earlier Python hosting alternative — not selected
+The selected runtime is **Cloudflare Workers Free with Static Assets, native Workers AI / `@cf/meta/llama-3.3-70b-instruct-fp8-fast` and D1**. Follow the [Worker deployment guide](../deploy-cloudflare-workers.md). The Worker serves TasteBridge only; SafeDesk and the original TasteBridge Python application remain available locally.
 
-The instructions below preserve the earlier **Cloudflare Workers AI REST API, Render Free service and Turso Free storage** alternative. Render requested payment-card verification, so this route is not selected for the current release. Its server tokens, remote storage and health checks describe the Python hosting alternative rather than the native Worker deployment. Groq Free / `openai/gpt-oss-20b` remains an explicitly configured Python alternative. No paid fallback, upgrade, autoscaling, disk/database or billable overage is authorized.
+## Selected runtime
 
-[Render Free](https://render.com/docs/free) can sleep after 15 minutes idle, take about a minute to wake and lose local files across restarts. Included-hour/build/bandwidth limits can interrupt access. Use no payment method; do not accept an upgrade to resolve limits. [Turso pricing](https://turso.tech/pricing) lists a $0 Free plan. Capacity/availability is not assumed.
+The repository's `worker/` directory implements the same-origin TasteBridge API. `ASSETS` serves the built sibling `web/` directory, `AI` calls the fixed model and `DB` stores durable application state. The application needs only `QLOO_API_KEY` as a private runtime secret; it does not need a Cloudflare management token, Turso token or local Codex credentials. Secrets belong in Production runtime configuration, never source or build variables.
 
-[Cloudflare Workers AI pricing](https://developers.cloudflare.com/workers-ai/platform/pricing/) provides a recurring 10,000-Neuron free allocation per UTC day. Workers Free rejects further operations when the allocation is exhausted; paid overage requires an upgrade. This compute quota is shared with other Workers AI usage in the account and may run out before the application's request cap. Do not add prepaid AI Gateway credits, select a paid model or configure a paid fallback. A free Cloudflare account is sufficient for the [REST API setup](https://developers.cloudflare.com/workers-ai/get-started/rest-api/); the application runs on Render and does not require a separately deployed Cloudflare Worker or custom domain.
+Cloudflare imports the full Git repository with project root `worker`, Node.js 22 and pnpm 11.25.0. Build with `pnpm install --frozen-lockfile && pnpm run build:cloud` and deploy with `pnpm run deploy`. The latter applies pending D1 migrations before publishing. For a new account, create the empty named D1 database before the first migration; the existing deployment's database and migration are initialized and must not be recreated.
 
-## Server environment
+On **2026-10-09**, deployment, migration `0001`, the `AI`/`DB`/`ASSETS` bindings and encrypted Production Qloo secret were verified. The public root redirects to `/tastebridge`. Actual two-member search, an initial twenty-films-per-member recommendation with three displayed poster cards and all three permitted successful exact seen updates completed. Earlier model validation failures preserved the prior shortlist and the current release successfully retried. Final entrant submission remains pending; broader live capacity and uptime limits are documented below.
 
-Keys/tokens belong only in server secret configuration. Never copy private local files or Codex authentication into the image, source or browser.
+## Free-account operation
 
-| Setting | Hosted release value |
-|---|---|
-| `PUBLIC_HOSTING` | `true` |
-| `APP_MODE` | `live` |
-| `MODEL_PROVIDER` | `cloudflare` |
-| `CODEX_ENABLED` | `false` |
-| `CLOUDFLARE_ACCOUNT_ID` | Actual Cloudflare account ID |
-| `CLOUDFLARE_API_TOKEN` | Private token with Workers AI Read/Edit for that account |
-| `CLOUDFLARE_MODEL_NAME` | `@cf/meta/llama-3.3-70b-instruct-fp8-fast` |
-| `QLOO_API_KEY` | Private hackathon key |
-| `QLOO_BASE_URL` | `https://hackathon.api.qloo.com` |
-| `REMOTE_DB_URL` | Official Turso `libsql://` or HTTPS database URL |
-| `REMOTE_DB_AUTH_TOKEN` | Private database token |
-| `ALLOWED_HOSTS` | Actual assigned hostname; no wildcard. Render's assigned external hostname is used when this is empty. |
-| `DAILY_MODEL_LIMIT` | Default `100` physical requests, subject to Cloudflare's separate compute quota |
-| `DAILY_QLOO_LIMIT` | Default `500` |
+No payment card, additional spending, paid fallback or automatic upgrade is authorized. Render was not selected after requiring card verification. Native Workers AI uses the existing account's Free allocation; keep Workers Free and do not add prepaid AI Gateway credits.
 
-In Cloudflare, select Workers AI → Use REST API → Create a Workers AI API Token. Review the token's scope and choose the account used by the application. Use only the scoped token and account ID in Render's private environment form; do not use a Global API Key. The [OpenAI-compatible endpoint](https://developers.cloudflare.com/workers-ai/configuration/open-ai-compatibility/) is `https://api.cloudflare.com/client/v4/accounts/{ACCOUNT_ID}/ai/v1/chat/completions`. The application uses that fixed official destination and a fixed model allowlist, without AI Gateway or automatic provider switching.
+D1 enforces 100 model / 500 physical Qloo calls per UTC day, including failures and retries. Shared leases allow two active recommendation workflows and two Qloo calls. Each workflow permits four model attempts and eight tools, with 20-second model and 10-second Qloo deadlines. Complete planner input is capped at 6,000 UTF-8 bytes and output at 1,024 completion tokens. A 210-second Agent operation budget stops further tool work; final awaited persistence/cleanup can extend the HTTP response. Groups support three successful seen updates; sessions/results expire after 24 hours.
 
-The selected Llama model is explicitly listed in [Cloudflare's JSON Mode guide](https://developers.cloudflare.com/workers-ai/features/json-mode/). Planning requests use a non-streaming JSON Schema response and bounded output, without a reasoning model. The application still validates the returned plan, available tool names and arguments before execution. Structured-output failure produces an error; it never authorizes an invalid tool call or fabricates Qloo results.
+The [Workers AI pricing documentation](https://developers.cloudflare.com/workers-ai/platform/pricing/) describes the shared 10,000-Neuron free daily allocation. It is independent of the application's request cap; 100 successful calls are not promised. Workers CPU, D1 quotas and service availability can interrupt access. The current active-version metric sample showed six invocations and zero errors, a 5 ms CPU summary and a recent CPU p99/p999 bucket of 142 ms, with no recorded CPU-limit rejection. This does not establish that each complete request stays within the Workers Free CPU allowance or guarantee judging uptime. Build startup timing and local synthetic benchmarks are not live CPU evidence.
 
-Hosted sessions, approvals, calendar commits and UTC daily claims use remote storage through the official Turso `/v2/pipeline` protocol. The application-owned HTTPX transport converts `libsql://` to HTTPS, applies 3-second connect/pool and 10-second read/write phase inactivity deadlines, and disables automatic retries and redirects. These phase deadlines do not establish a total workflow deadline. Synchronous storage operations run in a thread pool so remote waits do not block the async health route. The optional native libSQL package is for API characterization tests; it is not the production remote transport.
+## Preserved Python alternatives
 
-Missing/invalid remote settings fail closed without ephemeral SQLite fallback. Every physical provider request claims quota first; failed requests and Qloo retries count. Default daily caps are 100 model / 500 Qloo requests and persist remotely across reconstruction. These application caps do not promise 100 successful model calls per day: Cloudflare's 10,000-Neuron compute quota or other Free-account rate/capacity limits may stop requests sooner. Use one process/instance. Storage network-deadline and async availability checks passed in the full offline suite; actual live remote durability remains unverified.
+The source retains Python hosting support for Cloudflare Workers AI REST, Groq and Turso, with a Render service definition. These are **not the selected deployment**. Their tokens, environment variables, storage transport and health response describe the Python alternative, not the native Worker.
 
-Local Codex allows 90 seconds per planner request. Hosted Cloudflare/Groq allows 20 seconds per request with no automatic model retry, a 6,000-byte cap on the complete JSON payload (including schemas/tool history), and 1,024 completion tokens. Oversized requests fail visibly without truncating evidence. No provider failure enables a paid fallback.
+For that alternative, `PUBLIC_HOSTING=true`, `APP_MODE=live`, `CODEX_ENABLED=false` and an explicitly selected hosted provider are required. Cloudflare REST uses `MODEL_PROVIDER=cloudflare`, a scoped Workers AI token, an account ID and the fixed model; Groq instead uses `MODEL_PROVIDER=groq`, `GROQ_MODEL_NAME=openai/gpt-oss-20b` and its own private key. Neither provider is an automatic fallback. Hosted Python storage requires `REMOTE_DB_URL` and `REMOTE_DB_AUTH_TOKEN`, while `ALLOWED_HOSTS` identifies the actual hostname without a wildcard. Private values are not included in this repository.
 
-## Alternative hosted provider
+Python remote storage uses Turso's official `/v2/pipeline` protocol through HTTPX, with connection/pool and read/write phase deadlines, disabled automatic redirects/retries and synchronous work in a thread pool. Missing settings fail closed without ephemeral SQLite fallback. Its actual cloud deployment and durability are not established by native Worker checks. Render's card request caused that route to be rejected for this release. Local Codex remains local with `PUBLIC_HOSTING=false` and `MODEL_PROVIDER=codex`.
 
-For Groq, explicitly set `MODEL_PROVIDER=groq`, `GROQ_MODEL_NAME=openai/gpt-oss-20b` and the private `GROQ_API_KEY`; keep `PUBLIC_HOSTING=true`, `CODEX_ENABLED=false` and remote storage configured. [Groq's model documentation](https://console.groq.com/docs/models) describes that model. Free-account access, rate limits and the actual workflow require separate verification. Cloudflare credentials do not work on Groq, and a Cloudflare error never triggers an automatic Groq request. Keep local Codex authentication out of both hosted configurations.
+## Publication gate
 
-## Local/container paths
+Source, MIT license, lockfiles and instructions are public in the [repository](https://github.com/HootRock/safedesk-tastebridge). Captured Qloo responses, databases, authentication, local history and unreviewed media are excluded. The [public video](https://youtu.be/Qdl879gW4MU) demonstrates the earlier local prototype with Codex planning and supplements, rather than proves, the native Worker app.
 
-Local Codex keeps `MODEL_PROVIDER=codex`, `PUBLIC_HOSTING=false` and localhost binding via `scripts/start-local.ps1`. Its public guard rejects inference with `local_model_only`; subscription authentication stays local.
-
-Container/deployment preparation is not proof of remote durability or HTTPS planner access. The [published Ubuntu CI](https://github.com/HootRock/safedesk-tastebridge/actions/runs/37887086486) passed its locked-install backend/frontend jobs, but Docker's engine is not running, so container runtime is unverified. Final integration verification must use the installed release and real Free accounts.
-
-## Publication and public gate
-
-Application source, lockfiles, MIT license and instructions are included in this [repository](https://github.com/HootRock/safedesk-tastebridge). Qloo responses, databases, private configuration/authentication, local history and unreviewed media are excluded from the release.
-
-Verify health returns `public_hosting=true`, `model=cloudflare` and provider readiness without revealing credentials. Externally test two confirmed taste profiles → real recommendations → exact watched exclusion rerun, plus rate/error states and session behavior. If explicitly using the Groq alternative, health must instead report `model=groq`. Only then insert a public demo URL.
-
-[Qloo rules](https://qloo.devpost.com/rules) require free judge access through November 16, 2026 at 23:45 Eastern Time. The [public video](https://youtu.be/Qdl879gW4MU) supplements the required functional app and shows an earlier local prototype with Codex planning; it does not verify the hosted Cloudflare release. The current source starts with empty film frames rather than the earlier sample presentation and retrieves actual Qloo data at runtime. The required public demo and final submit receipt remain pending; final Qloo submission cannot proceed until the external workflow passes.
+The [live two-member acceptance workflow](testing-instructions.md#public-acceptance-gate) passed an initial recommendation and all three successful exact seen exclusions, including recovery after rejected updates. Real four-member, independent-session, concurrency/capacity and long-lived availability checks remain broader operational limits. [Qloo rules](https://qloo.devpost.com/rules) require free judge access through November 16, 2026 at 23:45 Eastern Time. Final submission and entrant eligibility/rights/agreement confirmations remain pending.

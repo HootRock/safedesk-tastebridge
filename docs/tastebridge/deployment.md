@@ -33,7 +33,7 @@ Local Codex allows 90 seconds per planner request. Hosted Groq allows 20 seconds
 
 Local Codex keeps `MODEL_PROVIDER=codex`, `PUBLIC_HOSTING=false` and localhost binding via `scripts/start-local.ps1`. Its public guard rejects inference with `local_model_only`; subscription authentication stays local.
 
-Container/deployment preparation is not proof of remote durability or HTTPS planner access. Docker's engine is not running, so container runtime is unverified. An offline GitHub Actions workflow is included but has not yet run. Final integration verification must use the installed release and real Free accounts.
+Container/deployment preparation is not proof of remote durability or HTTPS planner access. The [published Ubuntu CI](https://github.com/HootRock/safedesk-tastebridge/actions/runs/37887086486) passed its locked-install backend/frontend jobs, but Docker's engine is not running, so container runtime is unverified. Final integration verification must use the installed release and real Free accounts.
 
 ## Publication and public gate
 

@@ -46,7 +46,7 @@ Selected target: Groq Free / `openai/gpt-oss-20b`, one Render Free service and T
 
 Local Codex has a 90-second planner request timeout; hosted Groq has 20 seconds, a 6,000-byte complete JSON request cap (including schemas/tool history) and 1,024 completion-token cap. Oversized requests fail visibly without truncating evidence. Default daily caps of 100 model / 500 Qloo physical requests persist in remote storage; failed physical requests and Qloo retries count. Actual Free-account quotas may throttle sooner.
 
-Docker's engine is not running, so container runtime is unverified. The included offline GitHub Actions workflow has not yet run; its presence is not a CI result.
+The [published source workflow](https://github.com/HootRock/safedesk-tastebridge/actions/runs/37887086486), for commit `92e5769d0ed9cb44af7f729ea652040bf4b01c11`, completed successfully on 2026-10-09. Its Ubuntu backend and frontend jobs install the locked dependencies, run the offline suites and build/typecheck the frontend. All 127 published files were downloaded and matched against the sanitized release manifest using SHA-256. Docker's engine is not running, so container runtime is still unverified.
 
 Before claiming public readiness, complete locked install/container checks where available and verify real remote session/approval/quota durability across reconstruction. Externally test two TasteBridge profiles → genuine recommendation → exact watched exclusion rerun, without fabricated data; test rate/errors. Optional SafeDesk hosting must review sources/changed drafts, require current approval and commit once.
 

@@ -97,7 +97,7 @@ pnpm --dir web test --run
 pnpm --dir web build
 ```
 
-On 2026-10-09, the full offline backend passed **178 tests / 1 live test deselected**, including storage network-deadline, async availability and lost-commit-response checks. The frontend passed **78 tests in 13 files**, plus TypeScript `--noEmit` and Vite build. Existing Starlette deprecation and AuditTrail React list-key warnings remain. Docker's engine is not running, so container runtime is unverified; the included offline GitHub Actions workflow has not yet run. These checks establish no live Groq/Turso or public-hosting result. The optional live Qloo probe needs explicit `RUN_LIVE=1` and consumes real requests. See [dated evidence](docs/validation.md).
+On 2026-10-09, the full offline backend passed **178 tests / 1 live test deselected**, including storage network-deadline, async availability and lost-commit-response checks. The frontend passed **78 tests in 13 files**, plus TypeScript `--noEmit` and Vite build. The [published source CI](https://github.com/HootRock/safedesk-tastebridge/actions/runs/37887086486) also passed its backend and frontend jobs on Ubuntu with locked installs. Existing Starlette deprecation and AuditTrail React list-key warnings remain. Docker's engine is not running, so container runtime is unverified. These checks establish no live Groq/Turso or public-hosting result. The optional live Qloo probe needs explicit `RUN_LIVE=1` and consumes real requests. See [dated evidence](docs/validation.md).
 
 ## License and publication
 

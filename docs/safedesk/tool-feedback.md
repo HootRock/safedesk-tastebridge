@@ -51,7 +51,7 @@ Pydantic: schema-valid output can invent unsupported facts; exact quote/date/tim
 HTTPX: provider/network failures need bounded timeouts and explicit error mapping. An existing Starlette TestClient/HTTPX warning was previously documented.
 SQLite: local storage is not a distributed identity or real calendar service. Hosted durable storage and transaction behavior need actual remote verification; retention is not forensic erasure.
 React/TypeScript: async state needs stale-response protection; compile-time types do not authorize writes or validate all remote JSON.
-Vite/pnpm: a passing Windows build is not a container/Linux runtime check.
+Vite/pnpm: Windows build/typechecking and the published Ubuntu CI passed; a container runtime check remains pending.
 pytest and frontend test tools: fixtures establish boundaries, not universal live-model quality, visual correctness or public connectivity.
 Vitest/jsdom: the full run retains an existing AuditTrail list-key warning in a clarification test; browser verification is still needed.
 Fonts: typography alone cannot resolve hierarchy/readability; preserve licenses and sensible subsets.
@@ -67,7 +67,7 @@ Codex: the historical local integration used an existing eligible ChatGPT login 
 Claude/Codex development assistance: used during implementation/interface/video preparation. Their contribution is disclosed; no unsupported personal learning narrative is supplied.
 Python/FastAPI/Pydantic/HTTPX/SQLite: the documented local locked installation and fixture-backed HTTP tests established the prototype boundaries. Real hosted/remote installation still needs verification. The remote HTTPX transport uses 3-second connect/pool and 10-second read/write deadlines without retries or redirects; async storage callers use a thread pool.
 React/React DOM/TypeScript: components follow the API contract and real behavior is tested while external HTTP is controlled. Current type checking passed.
-Vite/pnpm: use the lockfile and frozen installation. The current Windows frontend tests, type checking and build passed; container runtime remains unverified because Docker's engine is not running. The included offline GitHub Actions workflow has not yet run.
+Vite/pnpm: use the lockfile and frozen installation. Windows frontend tests, type checking and build passed, and the [published Ubuntu CI](https://github.com/HootRock/safedesk-tastebridge/actions/runs/37887086486) passed its backend/frontend jobs with locked installs. Container runtime remains unverified because Docker's engine is not running.
 pytest/pytest-asyncio: offline commands need no live provider credentials. Create the temporary work parent before the README test command.
 Vitest/Testing Library/jsdom: current tests exercise real React interactions with controlled service responses; current full suite and build passed.
 Fontsource: installed pinned font packages are imported locally. All four SIL OFL notices ship under web/public/assets/licenses.

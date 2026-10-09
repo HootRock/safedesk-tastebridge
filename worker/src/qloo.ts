@@ -25,6 +25,26 @@ function safeJson(value: unknown, depth = 0): unknown {
   if (Array.isArray(value)) return value.map(item => safeJson(item, depth + 1));
   return Object.fromEntries(Object.entries(object(value)).filter(([key]) => !['__proto__', 'prototype', 'constructor'].includes(key)).map(([key, item]) => [key, safeJson(item, depth + 1)]));
 }
+// Keep the original, bounded card values. Rich provider fields are not cached or
+// persisted when the interface does not use them; invalid optional values stay absent.
+function cardMetadata(properties: Record<string, unknown>): Record<string, unknown> {
+  const projected: Record<string, unknown> = {};
+  const year = properties.release_year, duration = properties.duration;
+  if (typeof year === 'number' && Number.isSafeInteger(year) && year >= 0 && year <= 3000) projected.release_year = year;
+  if (typeof duration === 'number' && Number.isSafeInteger(duration) && duration > 0 && duration <= 1000) projected.duration = duration;
+  for (const [key, limit] of [['content_rating', 100], ['plot_summary', 4000], ['description', 4000]] as const) {
+    const value = properties[key];
+    if (typeof value === 'string' && value.length <= limit) projected[key] = value;
+  }
+  const genres = properties.genres;
+  if (Array.isArray(genres) && genres.length <= 10 && genres.every(value => typeof value === 'string' && value.length <= 100)) projected.genres = genres;
+  const image = properties.image;
+  if (image && typeof image === 'object' && !Array.isArray(image)) {
+    const url = (image as Record<string, unknown>).url;
+    if (typeof url === 'string' && url.length <= 2048) projected.image = {url};
+  }
+  return safeJson(projected) as Record<string, unknown>;
+}
 function parseRow(value: unknown, kind: Kind) {
   const row = object(value), entity_id = string(row.entity_id), name = string(row.name);
   if (row.types != null && (!Array.isArray(row.types) || row.types.some(type => typeof type !== 'string'))) invalid('entity_types');
@@ -137,7 +157,8 @@ export class Qloo {
   async recommend(seedIds: string[], excludedIds: string[]): Promise<MovieResponse> {
     if (!validIds(seedIds) || !validIds(excludedIds) || new Set(seedIds).size < 1 || new Set(seedIds).size > 5) throw new AppError('invalid_seeds', 422);
     const seeds = [...new Set(seedIds)].sort(), excluded = [...new Set(excludedIds)].sort();
-    const key = JSON.stringify([HOST, seeds, excluded]);
+    // Version the projection so older rich responses are never loaded into this flow.
+    const key = JSON.stringify([HOST, 'ui-metadata-v1', seeds, excluded]);
     let cached: MovieResponse | null;
     try { cached = await this.store.readCache(key); } catch { throw new AppError('cache_unavailable', 503); }
     if (cached) {
@@ -152,7 +173,7 @@ export class Qloo {
     const movies: Movie[] = [], seen = new Set(excluded);
     for (const value of entities) {
       const row = parseRow(value, 'movie');
-      const metadata = safeJson(row.properties) as Record<string, unknown>;
+      const metadata = cardMetadata(row.properties);
       const explainability = row.row.explainability == null ? null : safeJson(row.row.explainability) as Record<string, unknown> | unknown[];
       if (!row.matches || seen.has(row.entity_id)) continue;
       seen.add(row.entity_id);

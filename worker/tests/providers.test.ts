@@ -112,14 +112,14 @@ describe('Qloo bounded physical requests', () => {
   it('normalizes prototype keys and rejects decoded secret reflections in provider data', async () => {
     const s = setup(); const properties = JSON.parse('{"release_year":2025,"nested":{"__proto__":{"polluted":true},"safe":"value"}}');
     vi.stubGlobal('fetch', async () => body({results: {entities: [{...row(), properties}]}}));
-    expect((await new Qloo(s.env, s.store).recommend(['seed'], [])).movies[0].metadata).toEqual({release_year: 2025, nested: {safe: 'value'}});
+    expect((await new Qloo(s.env, s.store).recommend(['seed'], [])).movies[0].metadata).toEqual({release_year: 2025});
     vi.stubGlobal('fetch', async () => new Response(JSON.stringify({results: [{...row(), name: s.env.QLOO_API_KEY}]}).replace('synthetic-secret-marker', '\\u0073ynthetic-secret-marker')));
     await expect(new Qloo(s.env, s.store).search('x', 'movie')).rejects.toMatchObject({code: 'invalid_response', message: 'invalid_response'});
   });
   it('accepts rich recommendation responses above 256KiB within a one-MiB bound', async () => {
     const s = setup();
-    const description = 'x'.repeat(400000);
-    vi.stubGlobal('fetch', async () => body({results: {entities: [{...row(), properties: {release_year: 2025, description}}]}}));
+    const description = 'Original Qloo description.';
+    vi.stubGlobal('fetch', async () => body({results: {entities: [{...row(), properties: {release_year: 2025, description, unused_rich_metadata: 'x'.repeat(400000)}}]}}));
     const result = await new Qloo(s.env, s.store).recommend(['seed'], []);
     expect(result.movies[0].metadata).toEqual({release_year: 2025, description});
     expect(s.cache.size).toBe(1);

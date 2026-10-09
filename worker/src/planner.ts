@@ -19,8 +19,11 @@ function parameters(name: ToolName) {
     : {type: 'object', additionalProperties: false, properties: {}};
 }
 function envelopeSchema(available: ToolName[], remaining: number) {
+  // Non-refinement stages have no parameters. Constrain the model as well as validating it afterward.
+  const argumentsSchema = available.length && available.every(name => name !== 'refine_preferences')
+    ? {type: 'string', enum: ['{}']} : {type: 'string'};
   return {type: 'object', additionalProperties: false, required: ['tool_calls', 'text'], properties: {
-    tool_calls: {type: 'array', maxItems: available.length ? remaining : 0, items: {type: 'object', additionalProperties: false, required: ['call_id', 'name', 'arguments'], properties: {call_id: {type: 'string', minLength: 1, maxLength: 100}, name: available.length ? {type: 'string', enum: available} : {type: 'string'}, arguments: {type: 'string'}}}},
+    tool_calls: {type: 'array', maxItems: Math.min(available.length, remaining), items: {type: 'object', additionalProperties: false, required: ['call_id', 'name', 'arguments'], properties: {call_id: {type: 'string', minLength: 1, maxLength: 100}, name: available.length ? {type: 'string', enum: available} : {type: 'string'}, arguments: argumentsSchema}}},
     text: {type: ['string', 'null']},
   }};
 }

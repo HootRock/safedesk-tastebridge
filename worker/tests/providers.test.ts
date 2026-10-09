@@ -140,6 +140,35 @@ describe('Qloo bounded physical requests', () => {
 });
 
 describe('native Workers AI planner validation', () => {
+  it.each([
+    {output: null, reason: 'output_shape'},
+    {output: {response: {tool_calls: [], text: null}, metadata: {finish_reason: 'length', payload: 'untrusted-payload-marker'}}, reason: 'finish_reason'},
+    {output: {response: []}, reason: 'response_shape'},
+    {output: {response: 'untrusted-payload-marker'}, reason: 'response_json'},
+    {output: {response: {tool_calls: [], text: null, extra: 'untrusted-payload-marker'}}, reason: 'envelope_shape'},
+    {output: {response: {tool_calls: 'untrusted-payload-marker', text: null}}, reason: 'tool_calls_shape'},
+    {output: {response: {tool_calls: [], text: 3}}, reason: 'text_type'},
+    {output: {response: {tool_calls: [{call_id: 'untrusted-payload-marker', name: 'recommend_for_group', arguments: '{}', extra: true}], text: null}}, reason: 'call_shape'},
+    {output: {response: {tool_calls: [{call_id: 3, name: 'recommend_for_group', arguments: '{}'}], text: null}}, reason: 'call_id'},
+    {output: {response: {tool_calls: [{call_id: 'untrusted-payload-marker', name: 3, arguments: '{}'}], text: null}}, reason: 'call_name'},
+    {output: {response: {tool_calls: [{call_id: 'untrusted-payload-marker', name: 'rank_for_group', arguments: '{}'}], text: null}}, reason: 'call_unavailable'},
+    {output: {response: {tool_calls: [{call_id: 'untrusted-payload-marker', name: 'recommend_for_group', arguments: '{}'}, {call_id: 'untrusted-payload-marker', name: 'recommend_for_group', arguments: '{}'}], text: null}}, reason: 'call_id_duplicate'},
+    {output: {response: {tool_calls: [{call_id: 'untrusted-payload-marker', name: 'recommend_for_group', arguments: {}}], text: null}}, reason: 'arguments_type'},
+    {output: {response: {tool_calls: [{call_id: 'untrusted-payload-marker', name: 'recommend_for_group', arguments: 'untrusted-payload-marker'}], text: null}}, reason: 'arguments_json'},
+    {output: {response: {tool_calls: [{call_id: 'untrusted-payload-marker', name: 'recommend_for_group', arguments: '{"extra":"untrusted-payload-marker"}'}], text: null}}, reason: 'arguments_shape'},
+    {output: {response: {tool_calls: [{call_id: 'untrusted-payload-marker', name: 'refine_preferences', arguments: '{"excluded_ids":[]}'}], text: null}}, reason: 'refine_ids_count', refine: true},
+    {output: {response: {tool_calls: [{call_id: 'untrusted-payload-marker', name: 'refine_preferences', arguments: '{"excluded_ids":[3]}'}], text: null}}, reason: 'refine_id', refine: true},
+    {output: {response: {tool_calls: [{call_id: 'untrusted-payload-marker', name: 'refine_preferences', arguments: '{"excluded_ids":["untrusted-payload-marker","untrusted-payload-marker"]}'}], text: null}}, reason: 'refine_ids_duplicate', refine: true},
+    {output: {response: {tool_calls: [], text: 'synthetic-secret-marker'}}, reason: 'secret_reflection'},
+  ])('records only a fixed reason for rejected planner output: $reason', async ({output, reason, refine}) => {
+    const s = setup(output);
+    await expect(new Planner(s.env, s.store).next([{role: 'user', content: 'private-history-marker'}], refine ? ['refine_preferences'] : ['recommend_for_group'], {model_attempts: 0, tool_calls: 0})).rejects.toMatchObject({code: 'invalid_model_output', status: 502, message: 'invalid_model_output'});
+    expect(vi.mocked(console.warn).mock.calls).toEqual([['Planner validation rejected', reason]]);
+    const logs = JSON.stringify(vi.mocked(console.warn).mock.calls);
+    expect(logs).not.toContain('untrusted-payload-marker');
+    expect(logs).not.toContain('private-history-marker');
+    expect(logs).not.toContain(s.env.QLOO_API_KEY);
+  });
   it.each([false, true])('accepts binding response string or object and emits the raw strict envelope schema', async (asString) => {
     const envelope = {tool_calls: [{call_id: 'call-1', name: 'recommend_for_group', arguments: '{}'}], text: null};
     const s = setup({response: asString ? JSON.stringify(envelope) : envelope}); const budget = {model_attempts: 0, tool_calls: 0};

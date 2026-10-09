@@ -26,7 +26,7 @@ describe('Qloo bounded physical requests', () => {
   it.each([
     [{results: {entities: [{...row(), properties: []}]}}, 'properties_shape'],
     [{results: {entities: [row()]}, warnings: [{message: 'synthetic-secret-marker'}]}, 'warning_entry'],
-    [{results: {entities: [{...row(), properties: {description: 'x'.repeat(262145)}}]}}, 'body_read_limit'],
+    [{results: {entities: [{...row(), properties: {description: 'x'.repeat(1048577)}}]}}, 'body_read_limit'],
   ])('logs only a fixed validation reason when a recommendation is rejected', async (output, reason) => {
     const s = setup();
     // Keep the reflection marker in an unrelated rejected field out of diagnostic logs.
@@ -116,8 +116,17 @@ describe('Qloo bounded physical requests', () => {
     vi.stubGlobal('fetch', async () => new Response(JSON.stringify({results: [{...row(), name: s.env.QLOO_API_KEY}]}).replace('synthetic-secret-marker', '\\u0073ynthetic-secret-marker')));
     await expect(new Qloo(s.env, s.store).search('x', 'movie')).rejects.toMatchObject({code: 'invalid_response', message: 'invalid_response'});
   });
-  it('rejects provider bodies above 256KiB rather than silently truncating data', async () => {
-    const s = setup(); vi.stubGlobal('fetch', async () => body({results: {entities: [{...row(), properties: {description: 'x'.repeat(262145)}}]}}));
+  it('accepts rich recommendation responses above 256KiB within a one-MiB bound', async () => {
+    const s = setup();
+    const description = 'x'.repeat(400000);
+    vi.stubGlobal('fetch', async () => body({results: {entities: [{...row(), properties: {release_year: 2025, description}}]}}));
+    const result = await new Qloo(s.env, s.store).recommend(['seed'], []);
+    expect(result.movies[0].metadata).toEqual({release_year: 2025, description});
+    expect(s.cache.size).toBe(1);
+    expect(s.released).toEqual(['lease-1']);
+  });
+  it('rejects provider bodies above one MiB rather than silently truncating data', async () => {
+    const s = setup(); vi.stubGlobal('fetch', async () => body({results: {entities: [{...row(), properties: {description: 'x'.repeat(1048577)}}]}}));
     await expect(new Qloo(s.env, s.store).recommend(['seed'], [])).rejects.toMatchObject({code: 'invalid_response'});
     expect(s.qlooClaims()).toBe(1); expect(s.cache.size).toBe(0);
   });

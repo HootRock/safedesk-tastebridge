@@ -1,7 +1,8 @@
 import {AppError, type Choice, type Env, type Kind, type Movie, type MovieResponse, type StoreApi} from './contracts';
 
 const HOST = 'https://hackathon.api.qloo.com';
-const MAX_RESPONSE_BYTES = 256 * 1024;
+// Twenty film entities include rich Qloo metadata; keep a finite one-MiB bound.
+const MAX_RESPONSE_BYTES = 1024 * 1024;
 type ValidationReason = 'entity_shape' | 'entity_types' | 'properties_shape' | 'explainability_type' | 'metadata_depth' | 'metadata_number' | 'body_advertised_limit' | 'body_read_limit' | 'body_missing' | 'body_encoding' | 'secret_reflection' | 'json_shape' | 'response_status' | 'search_results' | 'release_year' | 'recommendation_entities' | 'warnings_type' | 'warning_entry';
 function invalid(reason: ValidationReason = 'entity_shape'): never {
   // Fixed reasons identify the failed guard without logging provider data or credentials.

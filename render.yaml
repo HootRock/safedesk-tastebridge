@@ -1,0 +1,37 @@
+# Free compute only. Supply credentials in Render's private environment form.
+# The external Turso database must separately remain on its Free plan.
+services:
+  - type: web
+    name: tastebridge-hackathon
+    runtime: docker
+    plan: free
+    region: oregon
+    dockerfilePath: ./deploy/Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/health
+    autoDeployTrigger: off
+    envVars:
+      - key: PUBLIC_HOSTING
+        value: "true"
+      - key: APP_MODE
+        value: live
+      - key: MODEL_PROVIDER
+        value: groq
+      - key: GROQ_MODEL_NAME
+        value: openai/gpt-oss-20b
+      - key: CODEX_ENABLED
+        value: "false"
+      - key: DATA_DIR
+        value: /tmp/tastebridge
+      - key: DAILY_MODEL_LIMIT
+        value: "100"
+      - key: DAILY_QLOO_LIMIT
+        value: "500"
+      - key: GROQ_API_KEY
+        sync: false
+      - key: QLOO_API_KEY
+        sync: false
+      - key: REMOTE_DB_URL
+        sync: false
+      - key: REMOTE_DB_AUTH_TOKEN
+        sync: false

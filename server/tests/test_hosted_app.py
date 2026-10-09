@@ -73,3 +73,24 @@ def test_public_origin_checks_do_not_depend_on_proxy_scheme(tmp_path, local_data
 def test_unknown_model_provider_is_rejected(tmp_path):
     with pytest.raises(ValueError, match="invalid_model_provider"):
         main.create_app(Settings(data_dir=str(tmp_path), model_provider="unknown"))
+
+
+@pytest.mark.parametrize("token,account,ready", [
+    ("test-cloudflare-token", "0123456789abcdef0123456789abcdef", True),
+    ("", "0123456789abcdef0123456789abcdef", False),
+    ("test-cloudflare-token", "../unvalidated-account", False),
+])
+def test_cloudflare_public_health_and_session_are_truthful_without_exposing_credentials(tmp_path, local_database_for_public_wiring, token, account, ready):
+    from hackathon_core.hosted import CloudflareGateway
+    config = public_settings(tmp_path, model_provider="cloudflare", cloudflare_api_token=token,
+                             cloudflare_account_id=account)
+    app = main.create_app(config)
+    assert isinstance(app.state.model, CloudflareGateway)
+    with TestClient(app, base_url="https://demo.example.test") as client:
+        for endpoint in ("/api/health", "/api/session"):
+            data = client.get(endpoint).json()
+            assert data["model"] == "cloudflare" and data["cloudflare_ready"] is ready
+            assert data["model_enabled"] is ready and data["public_hosting"]
+            assert data["model_name"] == "@cf/meta/llama-3.3-70b-instruct-fp8-fast"
+            assert "test-cloudflare-token" not in str(data) and account not in str(data)
+            assert "cloudflare_api_token" not in data and "cloudflare_account_id" not in data

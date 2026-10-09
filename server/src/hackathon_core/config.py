@@ -15,6 +15,9 @@ class Settings:
     model_provider: str = "codex"
     groq_api_key: str = field(default="", repr=False)
     groq_model_name: str = "openai/gpt-oss-20b"
+    cloudflare_account_id: str = ""
+    cloudflare_api_token: str = field(default="", repr=False)
+    cloudflare_model_name: str = "@cf/meta/llama-3.3-70b-instruct-fp8-fast"
     remote_db_url: str = ""
     remote_db_auth_token: str = field(default="", repr=False)
     allowed_hosts: tuple[str, ...] = ("*",)
@@ -43,6 +46,9 @@ class Settings:
             model_provider=os.getenv("MODEL_PROVIDER", "codex").strip().lower(),
             groq_api_key=os.getenv("GROQ_API_KEY", ""),
             groq_model_name=os.getenv("GROQ_MODEL_NAME", "openai/gpt-oss-20b"),
+            cloudflare_account_id=os.getenv("CLOUDFLARE_ACCOUNT_ID", ""),
+            cloudflare_api_token=os.getenv("CLOUDFLARE_API_TOKEN", ""),
+            cloudflare_model_name=os.getenv("CLOUDFLARE_MODEL_NAME", "@cf/meta/llama-3.3-70b-instruct-fp8-fast"),
             remote_db_url=os.getenv("REMOTE_DB_URL", ""),
             remote_db_auth_token=os.getenv("REMOTE_DB_AUTH_TOKEN", ""),
             allowed_hosts=tuple(host.strip() for host in os.getenv("ALLOWED_HOSTS", default_hosts).split(",") if host.strip()),

@@ -27,6 +27,22 @@ test.each(['/safedesk','/tastebridge'])('a hosted provider is identified without
   expect(screen.getByText('Live · hosted')).toHaveAttribute('title',expect.stringMatching(/Groq/));
 });
 
+test.each(['/safedesk','/tastebridge'])('Cloudflare planning is identified as hosted on %s',async(path)=>{
+  vi.stubGlobal('fetch',vi.fn(async()=>({ok:true,json:async()=>({mode:'live',model:'cloudflare',model_name:'@cf/meta/llama-3.3-70b-instruct-fp8-fast',cloudflare_ready:true,public_hosting:true,model_enabled:true,qloo_configured:true})})));
+  history.replaceState({},'',path);await act(async()=>{render(<App/>)});
+  const status=screen.getByText('Live · hosted');
+  expect(status).toHaveAttribute('title',expect.stringMatching(/Cloudflare Workers AI/));
+  expect(status.title).not.toMatch(/local|Codex/);
+});
+
+test.each(['/safedesk','/tastebridge'])('an unready Cloudflare planner gives hosted recovery guidance on %s',async(path)=>{
+  vi.stubGlobal('fetch',vi.fn(async()=>({ok:true,json:async()=>({mode:'live',model:'cloudflare',model_name:'@cf/meta/llama-3.3-70b-instruct-fp8-fast',cloudflare_ready:false,public_hosting:true,model_enabled:false,qloo_configured:true})})));
+  history.replaceState({},'',path);await act(async()=>{render(<App/>)});
+  const status=screen.getByText('Planner unavailable');
+  expect(status.title).not.toMatch(/\.env|Codex|install|start-local/i);
+  expect(status.title).toMatch(/try again|operator/i);
+});
+
 test.each(['/safedesk','/tastebridge'])('public service readiness errors do not send judges to local configuration on %s',async(path)=>{
   vi.stubGlobal('fetch',vi.fn(async()=>({ok:true,json:async()=>({mode:'live',model:'groq',public_hosting:true,model_enabled:false,qloo_configured:false})})));
   history.replaceState({},'',path);await act(async()=>{render(<App/>)});

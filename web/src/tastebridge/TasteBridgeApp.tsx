@@ -8,6 +8,7 @@ function status(h:ServiceHealth):{label:string;tone:'wait'|'ok'|'off';title:stri
  if(h.mode==='test')return {label:'Test fixture',tone:'ok',title:'Responses come from recorded test fixtures'};
  if(!h.qlooConfigured)return {label:h.publicHosting?'Qloo unavailable':'Qloo key needed',tone:'off',title:h.publicHosting?'The operator needs to restore Qloo access. Please try again later':'Add QLOO_API_KEY to .env, then restart the service'};
  if(!h.modelEnabled)return {label:h.publicHosting?'Planner unavailable':'Setup needed',tone:'off',title:h.publicHosting?'The operator needs to restore planning. Please try again later':'Enable the configured model in .env, then restart the service'};
+ if(h.modelProvider==='cloudflare')return {label:'Live · hosted',tone:'ok',title:'Live Qloo data with the Cloudflare Workers AI hosted planner'};
  return h.modelProvider==='groq'?{label:'Live · hosted',tone:'ok',title:'Live Qloo data with the Groq hosted planner'}:{label:'Live · local',tone:'ok',title:'Live Qloo data with the local Codex planner'};
 }
 // Two tastes overlapping; the lit lens is the film you share.

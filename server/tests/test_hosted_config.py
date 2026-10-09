@@ -46,3 +46,26 @@ def test_public_environment_does_not_read_optional_local_env(monkeypatch):
 
     monkeypatch.setattr("hackathon_core.config.Path.is_file", unexpected_read)
     assert Settings.from_env().allowed_hosts == ()
+
+
+def test_cloudflare_environment_is_explicit_and_token_is_not_in_repr(monkeypatch, tmp_path):
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr("hackathon_core.config.os.environ", {
+        "PUBLIC_HOSTING": "true", "MODEL_PROVIDER": "cloudflare",
+        "CLOUDFLARE_ACCOUNT_ID": "0123456789abcdef0123456789abcdef",
+        "CLOUDFLARE_API_TOKEN": "test-cloudflare-private",
+        "CLOUDFLARE_MODEL_NAME": "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
+    })
+    config = Settings.from_env()
+    assert config.model_provider == "cloudflare"
+    assert config.cloudflare_account_id == "0123456789abcdef0123456789abcdef"
+    assert config.cloudflare_api_token == "test-cloudflare-private"
+    assert config.cloudflare_model_name == "@cf/meta/llama-3.3-70b-instruct-fp8-fast"
+    assert "test-cloudflare-private" not in repr(config)
+
+
+def test_cloudflare_defaults_remain_unconfigured_without_affecting_local_codex():
+    config = Settings()
+    assert config.model_provider == "codex" and config.cloudflare_account_id == ""
+    assert config.cloudflare_api_token == ""
+    assert config.cloudflare_model_name == "@cf/meta/llama-3.3-70b-instruct-fp8-fast"

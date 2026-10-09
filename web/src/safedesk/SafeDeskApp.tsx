@@ -7,6 +7,7 @@ function status(h:ServiceHealth):{label:string;tone:'wait'|'ok'|'off';title:stri
  if(h.state==='unavailable')return {label:'Service unavailable',tone:'off',title:'Check your connection and try again shortly'};
  if(h.mode==='test')return {label:'Test fixture',tone:'ok',title:'Responses come from recorded test fixtures'};
  if(!h.modelEnabled)return {label:h.publicHosting?'Planner unavailable':'Setup needed',tone:'off',title:h.publicHosting?'The operator needs to restore planning. Please try again later':'Enable the configured model in .env, then restart the service'};
+ if(h.modelProvider==='cloudflare')return {label:'Live · hosted',tone:'ok',title:'Drafting with the Cloudflare Workers AI hosted planner'};
  return h.modelProvider==='groq'?{label:'Live · hosted',tone:'ok',title:'Drafting with the Groq hosted planner'}:{label:'Live · local',tone:'ok',title:'Drafting with the local Codex planner on this computer'};
 }
 function Mark(){return <svg className="sd-mark" viewBox="0 0 32 32" aria-hidden="true" focusable="false"><circle cx="16" cy="16" r="15" className="mark-disc"/><circle cx="16" cy="16" r="10.5" className="mark-ring"/><path d="M11 16.5l3.4 3.4L21.5 13" className="mark-tick"/></svg>}

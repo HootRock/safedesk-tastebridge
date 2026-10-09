@@ -5,6 +5,8 @@ import {useServiceHealth} from './useServiceHealth';
 afterEach(()=>vi.unstubAllGlobals());
 test.each([
   [{mode:'live',model:'groq',public_hosting:true,model_enabled:true,qloo_configured:true},'groq',true],
+  [{mode:'live',model:'cloudflare',model_name:'@cf/meta/llama-3.3-70b-instruct-fp8-fast',cloudflare_ready:true,public_hosting:true,model_enabled:true,qloo_configured:true},'cloudflare',true],
+  [{mode:'live',model:'cloudflare',model_name:'@cf/meta/llama-3.3-70b-instruct-fp8-fast',cloudflare_ready:false,public_hosting:true,model_enabled:false,qloo_configured:true},'cloudflare',true],
   [{mode:'live',model:'codex',public_hosting:false,model_enabled:false,qloo_configured:false},'codex',false],
 ])('health preserves provider and public hosting independently of model readiness',async(payload,modelProvider,publicHosting)=>{
   vi.stubGlobal('fetch',vi.fn(async()=>({ok:true,json:async()=>payload})));

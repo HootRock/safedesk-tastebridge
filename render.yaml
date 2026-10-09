@@ -16,9 +16,9 @@ services:
       - key: APP_MODE
         value: live
       - key: MODEL_PROVIDER
-        value: groq
-      - key: GROQ_MODEL_NAME
-        value: openai/gpt-oss-20b
+        value: cloudflare
+      - key: CLOUDFLARE_MODEL_NAME
+        value: "@cf/meta/llama-3.3-70b-instruct-fp8-fast"
       - key: CODEX_ENABLED
         value: "false"
       - key: DATA_DIR
@@ -27,7 +27,9 @@ services:
         value: "100"
       - key: DAILY_QLOO_LIMIT
         value: "500"
-      - key: GROQ_API_KEY
+      - key: CLOUDFLARE_ACCOUNT_ID
+        sync: false
+      - key: CLOUDFLARE_API_TOKEN
         sync: false
       - key: QLOO_API_KEY
         sync: false

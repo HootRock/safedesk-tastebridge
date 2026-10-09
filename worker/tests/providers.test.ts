@@ -1,4 +1,4 @@
-import {afterEach, describe, expect, it, vi} from 'vitest';
+import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import {Qloo} from '../src/qloo';
 import {Planner} from '../src/planner';
 import {AppError, type Env, type MovieResponse, type StoreApi} from '../src/contracts';
@@ -19,9 +19,24 @@ function setup(output: unknown = {response: {tool_calls: [], text: null}}) {
 }
 const body = (value: unknown, status = 200, headers?: Record<string, string>) => new Response(JSON.stringify(value), {status, headers});
 const row = (id = 'synthetic-film') => ({entity_id: id, name: `Title ${id}`, types: ['urn:entity:movie'], properties: {release_year: 2025}, explainability: {signal: 'synthetic'}});
-afterEach(() => {vi.unstubAllGlobals(); vi.useRealTimers();});
+beforeEach(() => {vi.spyOn(console, 'warn').mockImplementation(() => {});});
+afterEach(() => {vi.unstubAllGlobals(); vi.useRealTimers(); vi.restoreAllMocks();});
 
 describe('Qloo bounded physical requests', () => {
+  it.each([
+    [{results: {entities: [{...row(), properties: []}]}}, 'properties_shape'],
+    [{results: {entities: [row()]}, warnings: [{message: 'synthetic-secret-marker'}]}, 'warning_entry'],
+    [{results: {entities: [{...row(), properties: {description: 'x'.repeat(262145)}}]}}, 'body_read_limit'],
+  ])('logs only a fixed validation reason when a recommendation is rejected', async (output, reason) => {
+    const s = setup();
+    // Keep the reflection marker in an unrelated rejected field out of diagnostic logs.
+    if (reason === 'warning_entry') s.env.QLOO_API_KEY = 'other-synthetic-key';
+    vi.stubGlobal('fetch', async () => body(output));
+    await expect(new Qloo(s.env, s.store).recommend(['seed'], [])).rejects.toMatchObject({code: 'invalid_response'});
+    expect(console.warn).toHaveBeenCalledWith('Qloo validation rejected', reason);
+    expect(JSON.stringify(vi.mocked(console.warn).mock.calls)).not.toContain('synthetic-secret-marker');
+    expect(JSON.stringify(vi.mocked(console.warn).mock.calls)).not.toContain(s.env.QLOO_API_KEY);
+  });
   it('uses the fixed search endpoint with strict search limits and no redirect', async () => {
     const s = setup(); const seen: {url: URL; init: RequestInit}[] = [];
     vi.stubGlobal('fetch', async (url: string | URL, init: RequestInit) => {seen.push({url: new URL(url), init}); return body({results: Array.from({length: 7}, (_, i) => row(`film-${i}`))});});

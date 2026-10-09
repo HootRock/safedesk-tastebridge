@@ -2,9 +2,14 @@ import {AppError, type Choice, type Env, type Kind, type Movie, type MovieRespon
 
 const HOST = 'https://hackathon.api.qloo.com';
 const MAX_RESPONSE_BYTES = 256 * 1024;
-function invalid(): never { throw new AppError('invalid_response', 502); }
-function object(value: unknown): Record<string, unknown> {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) invalid();
+type ValidationReason = 'entity_shape' | 'entity_types' | 'properties_shape' | 'explainability_type' | 'metadata_depth' | 'metadata_number' | 'body_advertised_limit' | 'body_read_limit' | 'body_missing' | 'body_encoding' | 'secret_reflection' | 'json_shape' | 'response_status' | 'search_results' | 'release_year' | 'recommendation_entities' | 'warnings_type' | 'warning_entry';
+function invalid(reason: ValidationReason = 'entity_shape'): never {
+  // Fixed reasons identify the failed guard without logging provider data or credentials.
+  console.warn('Qloo validation rejected', reason);
+  throw new AppError('invalid_response', 502);
+}
+function object(value: unknown, reason: ValidationReason = 'entity_shape'): Record<string, unknown> {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) invalid(reason);
   return value as Record<string, unknown>;
 }
 function string(value: unknown): string {
@@ -13,17 +18,17 @@ function string(value: unknown): string {
 }
 // Keep JSON data only and drop keys that can affect object prototypes downstream.
 function safeJson(value: unknown, depth = 0): unknown {
-  if (depth > 20) invalid();
+  if (depth > 20) invalid('metadata_depth');
   if (value == null || typeof value === 'string' || typeof value === 'boolean') return value;
-  if (typeof value === 'number') { if (!Number.isFinite(value)) invalid(); return value; }
+  if (typeof value === 'number') { if (!Number.isFinite(value)) invalid('metadata_number'); return value; }
   if (Array.isArray(value)) return value.map(item => safeJson(item, depth + 1));
   return Object.fromEntries(Object.entries(object(value)).filter(([key]) => !['__proto__', 'prototype', 'constructor'].includes(key)).map(([key, item]) => [key, safeJson(item, depth + 1)]));
 }
 function parseRow(value: unknown, kind: Kind) {
   const row = object(value), entity_id = string(row.entity_id), name = string(row.name);
-  if (row.types != null && (!Array.isArray(row.types) || row.types.some(type => typeof type !== 'string'))) invalid();
-  const properties = row.properties == null ? {} : object(row.properties);
-  if (row.explainability != null && (typeof row.explainability !== 'object')) invalid();
+  if (row.types != null && (!Array.isArray(row.types) || row.types.some(type => typeof type !== 'string'))) invalid('entity_types');
+  const properties = row.properties == null ? {} : object(row.properties, 'properties_shape');
+  if (row.explainability != null && (typeof row.explainability !== 'object')) invalid('explainability_type');
   return {row, entity_id, name, properties, matches: !row.types || !(row.types as string[]).length || (row.types as string[]).includes(`urn:entity:${kind}`)};
 }
 function validIds(ids: string[]): boolean {
@@ -31,8 +36,8 @@ function validIds(ids: string[]): boolean {
 }
 async function boundedBody(response: Response, controller: AbortController): Promise<string> {
   const advertised = Number(response.headers.get('Content-Length'));
-  if (advertised > MAX_RESPONSE_BYTES) {controller.abort(); invalid();}
-  if (!response.body) invalid();
+  if (advertised > MAX_RESPONSE_BYTES) {controller.abort(); invalid('body_advertised_limit');}
+  if (!response.body) invalid('body_missing');
   const reader = response.body.getReader();
   const cancel = () => {void reader.cancel().catch(() => {});};
   controller.signal.addEventListener('abort', cancel, {once: true});
@@ -44,13 +49,13 @@ async function boundedBody(response: Response, controller: AbortController): Pro
       if (controller.signal.aborted) throw new AppError('timeout', 504);
       if (chunk.done) break;
       size += chunk.value.byteLength;
-      if (size > MAX_RESPONSE_BYTES) {cancel(); invalid();}
+      if (size > MAX_RESPONSE_BYTES) {cancel(); invalid('body_read_limit');}
       chunks.push(chunk.value);
     }
     const bytes = new Uint8Array(size);
     let offset = 0;
     for (const chunk of chunks) {bytes.set(chunk, offset); offset += chunk.byteLength;}
-    try {return new TextDecoder('utf-8', {fatal: true}).decode(bytes);} catch {invalid();}
+    try {return new TextDecoder('utf-8', {fatal: true}).decode(bytes);} catch {invalid('body_encoding');}
   } catch (error) {
     if (error instanceof AppError) throw error;
     throw new AppError('timeout', 504);
@@ -92,11 +97,12 @@ export class Qloo {
           if (!response.ok) throw new AppError('service_error', 502);
           let raw: string;
           raw = await boundedBody(response, controller);
-          if (raw.includes(key)) invalid();
+          if (raw.includes(key)) invalid('secret_reflection');
           let data: Record<string, unknown>;
-          try { data = object(JSON.parse(raw)); } catch { invalid(); }
+          try { data = object(JSON.parse(raw)); } catch { invalid('json_shape'); }
           // Check decoded values as well, including JSON unicode escape sequences.
-          if (JSON.stringify(data).includes(key) || data.success === false) invalid();
+          if (JSON.stringify(data).includes(key)) invalid('secret_reflection');
+          if (data.success === false) invalid('response_status');
           return data;
         })();
         const deadline = new Promise<never>((_, reject) => {timer = setTimeout(() => {controller.abort(); reject(new AppError('timeout', 504));}, 10000);});
@@ -117,12 +123,12 @@ export class Qloo {
   async search(query: string, kind: Kind): Promise<Choice[]> {
     if (typeof query !== 'string' || query.trim().length < 1 || query.trim().length > 200 || !['movie', 'artist'].includes(kind)) throw new AppError('invalid_query', 422);
     const data = await this.get('/search', {query: query.trim(), types: `urn:entity:${kind}`, take: '5', sort_by: 'match'});
-    if (!Array.isArray(data.results)) invalid();
+    if (!Array.isArray(data.results)) invalid('search_results');
     const choices: Choice[] = [];
     for (const value of data.results) {
       const row = parseRow(value, kind);
       const year = row.properties.release_year ?? null;
-      if (year != null && !Number.isSafeInteger(year)) invalid();
+      if (year != null && !Number.isSafeInteger(year)) invalid('release_year');
       if (row.matches && choices.length < 5) choices.push({entity_id: row.entity_id, name: row.name, kind, year: year as number | null});
     }
     return choices;
@@ -140,8 +146,8 @@ export class Qloo {
     const params: Record<string, string> = {'filter.type': 'urn:entity:movie', 'signal.interests.entities': seeds.join(','), take: '20'};
     if (excluded.length) params['filter.exclude.entities'] = excluded.join(',');
     const data = await this.get('/v2/insights', params);
-    const entities = object(data.results).entities;
-    if (!Array.isArray(entities)) invalid();
+    const entities = object(data.results, 'recommendation_entities').entities;
+    if (!Array.isArray(entities)) invalid('recommendation_entities');
     const movies: Movie[] = [], seen = new Set(excluded);
     for (const value of entities) {
       const row = parseRow(value, 'movie');
@@ -152,7 +158,8 @@ export class Qloo {
       if (movies.length < 20) movies.push({entity_id: row.entity_id, name: row.name, metadata, rank: movies.length + 1, explainability});
     }
     const warnings = data.warnings ?? [];
-    if (!Array.isArray(warnings) || warnings.some(item => typeof item !== 'string')) invalid();
+    if (!Array.isArray(warnings)) invalid('warnings_type');
+    if (warnings.some(item => typeof item !== 'string')) invalid('warning_entry');
     const result: MovieResponse = {movies, warnings, fetched_at: new Date(this.clock()).toISOString()};
     try { await this.store.writeCache(key, structuredClone(result)); } catch { throw new AppError('cache_unavailable', 503); }
     return result;

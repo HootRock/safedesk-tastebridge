@@ -5,7 +5,7 @@ Two hackathon applications, first coded on **2026-10-03**.
 - **SafeDesk** turns paragraphs into tasks with exact source quotes and requires human approval before writing to a demo calendar. It is an independent Alexa+ web experience simulation.
 - **TasteBridge** combines confirmed film/music preferences of 2–4 friends into a live Qloo movie shortlist, with per-person rank evidence and exact seen-film exclusions.
 
-Local planning uses official Codex CLI, an eligible existing ChatGPT login and `gpt-6-luna`; it consumes that account's allowance. The selected hosted release target is **Cloudflare Workers AI Free / `@cf/meta/llama-3.3-70b-instruct-fp8-fast`, one Render Free service and Turso Free storage**. Groq Free / `openai/gpt-oss-20b` remains an alternative. Live integration and public judge workflows are unverified. No paid fallback or upgrade is authorized.
+Local planning uses official Codex CLI, an eligible existing ChatGPT login and `gpt-6-luna`; it consumes that account's allowance. The selected TasteBridge hosted release target is the additive **Cloudflare Workers Free target in `worker/`, with Static Assets, D1 and native Workers AI / `@cf/meta/llama-3.3-70b-instruct-fp8-fast`**. It uses the existing Free account without a payment card or additional spending; Render was not selected after requiring card verification. The Python application remains available locally for SafeDesk and TasteBridge, with its earlier hosting alternatives preserved. Follow the [Cloudflare deployment guide](docs/deploy-cloudflare-workers.md). A public application URL and real hosted workflow verification are still pending. No paid fallback or upgrade is authorized.
 
 ## Access and submission status
 

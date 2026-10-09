@@ -1,0 +1,21 @@
+{
+  "name": "tastebridge-worker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "build": "wrangler deploy --dry-run --outdir dist",
+    "build:cloud": "pnpm --dir ../web install --frozen-lockfile && pnpm --dir ../web build",
+    "db:migrate": "wrangler d1 migrations apply DB --remote",
+    "deploy": "pnpm db:migrate && wrangler deploy"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "5.20261008.1",
+    "miniflare": "4.20260730.0",
+    "typescript": "5.9.3",
+    "vitest": "3.2.7",
+    "wrangler": "4.148.0"
+  }
+}

@@ -1,6 +1,10 @@
 .venv/
 node_modules/
 web/dist/
+worker/dist/
+.wrangler/
+.dev.vars
+.dev.vars.*
 __pycache__/
 *.egg-info/
 .pytest_cache/

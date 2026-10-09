@@ -1,6 +1,10 @@
-# Hosted deployment release target
+# Hosted deployment targets
 
-Selected route: **Cloudflare Workers AI Free / `@cf/meta/llama-3.3-70b-instruct-fp8-fast`, one Render Free service and Turso Free storage**. The public application is not yet deployed and verified. Live model quality, remote transactions and public workflows remain unverified. Groq Free / `openai/gpt-oss-20b` remains an explicitly configured alternative. No paid fallback, upgrade, autoscaling, disk/database or billable overage is authorized.
+The current no-card, zero-additional-spending TasteBridge target is **Cloudflare Workers Free with Static Assets, native Workers AI / `@cf/meta/llama-3.3-70b-instruct-fp8-fast` and D1**. Follow the [current Cloudflare Worker deployment guide](../deploy-cloudflare-workers.md). The public application URL, remote schema migration and live hosted workflow remain unverified. The local Python application remains available for SafeDesk and TasteBridge.
+
+## Earlier Python hosting alternative — not selected
+
+The instructions below preserve the earlier **Cloudflare Workers AI REST API, Render Free service and Turso Free storage** alternative. Render requested payment-card verification, so this route is not selected for the current release. Its server tokens, remote storage and health checks describe the Python hosting alternative rather than the native Worker deployment. Groq Free / `openai/gpt-oss-20b` remains an explicitly configured Python alternative. No paid fallback, upgrade, autoscaling, disk/database or billable overage is authorized.
 
 [Render Free](https://render.com/docs/free) can sleep after 15 minutes idle, take about a minute to wake and lose local files across restarts. Included-hour/build/bandwidth limits can interrupt access. Use no payment method; do not accept an upgrade to resolve limits. [Turso pricing](https://turso.tech/pricing) lists a $0 Free plan. Capacity/availability is not assumed.
 

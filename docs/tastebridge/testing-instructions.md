@@ -34,7 +34,7 @@ D1 persists caps of 100 model / 500 Qloo physical calls per UTC day, including f
 
 ## Public acceptance gate
 
-The required externally accessible two-member recommendation and all three successful exact seen updates are verified. Final Devpost submission and entrant team/eligibility/rights/agreement confirmations remain pending. The entrant must keep access free throughout judging under [Qloo rules](https://qloo.devpost.com/rules), through November 16, 2026 at 23:45 Eastern Time.
+The required externally accessible two-member recommendation and all three successful exact seen updates are verified. On **2026-10-09**, the entrant personally completed Devpost's required final acceptance and submission; the official [TasteBridge entry](https://devpost.com/software/tastebridge-uvnd7z) displayed **SUBMITTED**, with **5/5 steps complete**. The entrant must keep access free throughout judging under [Qloo rules](https://qloo.devpost.com/rules), through November 16, 2026 at 23:45 Eastern Time.
 
 Broader checks remain operational limits: real four-member recommendations, independent-session isolation, concurrency/capacity, long-lived availability and complete request CPU/D1 behavior have not all been measured live. A synthetic fully wired four-member workflow, with each physical Qloo request retried once, exercised 41 D1 statements including run/group reads; that is offline evidence, not a live maximum measurement.
 

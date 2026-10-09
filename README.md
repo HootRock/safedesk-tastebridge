@@ -18,13 +18,13 @@ Local planning uses official Codex CLI, an eligible existing ChatGPT login and `
 | [TasteBridge video](https://youtu.be/Qdl879gW4MU) | Public, English, 1080p, 119.47 seconds |
 | [TasteBridge application](https://tastebridge-hackathon.wtr1274970944.workers.dev/tastebridge) | Deployed; real two-member recommendation and all three successful seen updates verified |
 | [SafeDesk entry](https://devpost.com/software/safedesk) | Submitted; Devpost displayed “Project submitted!” and the Amazon competition association |
-| TasteBridge entry | Draft; final entrant submission and confirmations pending |
+| [TasteBridge entry](https://devpost.com/software/tastebridge-uvnd7z) | Submitted on 2026-10-09; the official entry page displayed **SUBMITTED**, with **5/5 steps complete**, after the entrant personally completed final acceptance |
 
 Both videos use TTS narration and disclose AI assistance. Codex and Claude assisted implementation, interface work and video preparation. SafeDesk has no Alexa SDK, AWS runtime, real calendar account or platform certification. No AWS or open-source mini-challenge participation is claimed.
 
 The recordings show the earlier local prototype, with local Codex planning. They do not demonstrate the Cloudflare-hosted release. TasteBridge's current source starts with empty film frames and retrieves real Qloo data at runtime; the earlier video's sample presentation is not a bundled recommendation dataset.
 
-The [Amazon FAQ](https://amazonappdev2026.devpost.com/details/faqs) permits local source plus video for the simulation route used by SafeDesk. [Qloo rules](https://qloo.devpost.com/rules) require a functional externally published application, public source and free judge access through November 16, 2026 at 23:45 Eastern Time. TasteBridge's core public workflow is verified; final entry and entrant/team, eligibility, rights and agreement confirmations remain pending. Free-account capacity and ongoing judging availability are operational limitations.
+The [Amazon FAQ](https://amazonappdev2026.devpost.com/details/faqs) permits local source plus video for the simulation route used by SafeDesk. [Qloo rules](https://qloo.devpost.com/rules) require a functional externally published application, public source and free judge access through November 16, 2026 at 23:45 Eastern Time. TasteBridge's core public workflow is verified, and the entrant personally completed final acceptance and submission on 2026-10-09. Free-account capacity and ongoing judging availability remain operational limitations.
 
 ## Run locally on Windows
 
@@ -127,4 +127,4 @@ Application code is [MIT licensed](LICENSE). Qloo responses/media retain their r
 
 SafeDesk bundles **Instrument Sans and Newsreader**; TasteBridge bundles **Manrope and DM Serif Display**. SIL Open Font License notices ship under `web/public/assets/licenses`. Design guidance is not a runtime/Amazon integration.
 
-Review the [SafeDesk submission](docs/safedesk/submission.md), [five-question tool feedback](docs/safedesk/tool-feedback.md) and [TasteBridge submission](docs/tastebridge/submission.md) before final acceptance.
+The [SafeDesk submission](docs/safedesk/submission.md), [five-question tool feedback](docs/safedesk/tool-feedback.md) and [TasteBridge submission](docs/tastebridge/submission.md) document the project descriptions and disclosures. Both competition entries are submitted.

@@ -1,4 +1,4 @@
-# TasteBridge — submission draft
+# TasteBridge — submission
 
 **Tagline:** Different tastes. One movie night. A shortlist with visible trade-offs.
 
@@ -22,4 +22,6 @@
 
 **Access:** [Public TasteBridge application](https://tastebridge-hackathon.wtr1274970944.workers.dev/tastebridge), [public MIT source and lockfiles](https://github.com/HootRock/safedesk-tastebridge), and [English video](https://youtu.be/Qdl879gW4MU), 1080p, 119.47 seconds. Deployment, migration `0001`, bindings and encrypted Production Qloo runtime-secret entry are complete. No private keys or judge credentials are included in source. The app displays `Live · hosted`; readiness badges do not independently prove provider success.
 
-**Actual first coding date:** 2026-10-03. [Official rules](https://qloo.devpost.com/rules) require public source, a functional public app and free judge access through November 16, 2026 at 23:45 Eastern Time. The core live workflow is verified; final submission and the entrant's team, eligibility, rights and agreement confirmations remain pending. No final Qloo submit receipt is claimed.
+**Actual first coding date:** 2026-10-03. [Official rules](https://qloo.devpost.com/rules) require public source, a functional public app and free judge access through November 16, 2026 at 23:45 Eastern Time. The core live workflow is verified.
+
+**Submission status:** On **2026-10-09**, the entrant personally completed Devpost's required final acceptance and submission. The official entry page for [TasteBridge](https://devpost.com/software/tastebridge-uvnd7z), project 1208528, displayed **SUBMITTED** with **5/5 steps complete**.
